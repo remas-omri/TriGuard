@@ -6,10 +6,10 @@ Smart Multi-Factor Biometric Security System (Face + Voice + ECG).
 ## Purpose
 The database is responsible for:
 - Storing user accounts and roles
-- Storing biometric templates (not raw signals)
+- Storing biometric templates (NOT raw signals)
 - Registering devices (ESP32) securely
 - Logging access attempts
-- Storing verification factor results (Face/Voice/ECG)
+- Storing verification factor results (Face/Voice/ECG) in a normalized table
 - Generating alerts for unauthorized/failed attempts
 - Recording audit logs for administrative actions
 
@@ -35,11 +35,11 @@ Stores system users and their role.
 - created_at
 
 ### 3) user_biometrics
-Stores biometric templates/hashes per user (NOT raw biometrics).
+Stores biometric templates per user (NOT raw biometrics).
 - user_id (PK/FK → users.user_id)
-- face_template / face_hash (optional)
-- voice_template / voice_hash (optional)
-- ecg_template / ecg_hash (optional)
+- face_template (nullable)
+- voice_print (nullable)
+- ecg_template (nullable)
 - updated_at
 
 ### 4) devices
@@ -58,7 +58,7 @@ Logs each access attempt (one row per attempt).
 - user_id (FK → users.user_id) nullable
 - attempt_time
 - final_result (passed/failed)
-- status (recorded/...)
+- status (recorded)
 - failure_reason (nullable)
 - ip_address
 - user_agent
@@ -67,22 +67,26 @@ Logs each access attempt (one row per attempt).
 
 ### 6) verification_results
 Stores the results of each factor per attempt (3 rows per attempt).
-- id (PK) OR (attempt_id + method as unique)
+- verification_id (PK)
 - attempt_id (FK → attempts.attempt_id)
 - method (face/voice/ecg)
 - result (pass/fail/na)
 - score (nullable)
 - created_at
 
+✅ Note: We store Face/Voice/ECG results in `verification_results` (not in `attempts`)
+to avoid data duplication and support future expansion (adding more factors).
+
 ### 7) alerts
-Stores alerts generated when verification fails or unauthorized attempt occurs.
+Stores alerts generated when verification fails or an unauthorized attempt occurs.
 - alert_id (PK)
 - attempt_id (FK → attempts.attempt_id)
 - alert_type (unauthorized_attempt / verification_failed / ...)
 - status (pending/acknowledged)
 - message
 - created_at
-- acknowledged_at
+- sent_at (nullable)
+- acknowledged_at (nullable)
 - acknowledged_by (FK → users.user_id) nullable
 
 ### 8) audit_logs
@@ -99,10 +103,10 @@ Tracks administrative actions for accountability.
 
 ## Relationships
 - One role → many users
-- One user → one biometrics row (1:1)
+- One user → one biometrics row (1:1) in user_biometrics
 - One device → many attempts (1:N)
-- One attempt → many verification_results (1:N)
-- One attempt → zero/one or more alerts (1:N)
+- One attempt → many verification_results (1:N) (typically 3 rows: face + voice + ecg)
+- One attempt → can generate alerts (1:N)
 - One admin/security user → many audit logs (1:N)
 
 ---
@@ -110,8 +114,8 @@ Tracks administrative actions for accountability.
 ## Security Considerations
 - Passwords stored as hashes (password_hash)
 - Device keys stored as hashes (api_key_hash)
-- Biometric data stored as templates/hashes (not raw signals)
-- Results normalized: verification results stored in verification_results (avoids duplication and supports future expansion)
+- Biometric data stored as templates/prints (not raw signals)
+- Verification results normalized in verification_results (avoids duplication and supports scaling)
 - Soft-disable supported via is_active for users/devices
 
 ---
