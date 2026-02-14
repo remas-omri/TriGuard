@@ -1,79 +1,122 @@
-# Database Module – Biometric Identification System
+# Database Module – Secure Access System
 
-This folder contains the database design and implementation for the
-Smart Multi-Factor Biometric Security System.
+This folder contains the database schema and SQL exports for the
+Smart Multi-Factor Biometric Security System (Face + Voice + ECG).
 
 ## Purpose
 The database is responsible for:
-- Storing user information
-- Storing biometric templates (Face, Voice, ECG)
-- Logging all access attempts
-- Generating alerts for unauthorized access
-
-The database is designed to work with the backend APIs and receive data
-from hardware devices, web application, and mobile application.
+- Storing user accounts and roles
+- Storing biometric templates (not raw signals)
+- Registering devices (ESP32) securely
+- Logging access attempts
+- Storing verification factor results (Face/Voice/ECG)
+- Generating alerts for unauthorized/failed attempts
+- Recording audit logs for administrative actions
 
 ---
 
-## Database Tables
+## Main Tables
 
-### 1. users
-Stores system users and their roles.
-- user_id (Primary Key)
+### 1) roles
+Defines system roles.
+- role_id (PK)
+- name (admin, security, user)
+
+### 2) users
+Stores system users and their role.
+- user_id (PK)
 - full_name
 - national_id
-- role (admin, security, user)
+- email
+- phone
+- password_hash
+- role_id (FK → roles.role_id)
+- is_active
 - created_at
 
-### 2. biometric_data
-Stores biometric templates (not raw data) for security reasons.
-- bio_id (Primary Key)
-- user_id (Foreign Key)
-- face_hash
-- voice_hash
-- ecg_hash
-- last_update
+### 3) user_biometrics
+Stores biometric templates/hashes per user (NOT raw biometrics).
+- user_id (PK/FK → users.user_id)
+- face_template / face_hash (optional)
+- voice_template / voice_hash (optional)
+- ecg_template / ecg_hash (optional)
+- updated_at
 
-### 3. login_attempts
-Logs every authentication attempt.
-- attempt_id (Primary Key)
-- user_id (Foreign Key)
-- face_result
-- voice_result
-- ecg_result
-- final_result
+### 4) devices
+Registers hardware devices (ESP32) securely.
+- device_id (PK)
+- serial (unique)
+- location
+- api_key_hash (hashed device key)
+- is_active
+- created_at
+
+### 5) attempts
+Logs each access attempt (one row per attempt).
+- attempt_id (PK)
+- device_id (FK → devices.device_id)
+- user_id (FK → users.user_id) nullable
 - attempt_time
+- final_result (passed/failed)
+- status (recorded/...)
+- failure_reason (nullable)
+- ip_address
+- user_agent
+- meta (JSON/text)
+- created_at
 
-### 4. alerts
-Stores alerts generated from failed authentication attempts.
-- alert_id (Primary Key)
-- attempt_id (Foreign Key)
-- alert_type
-- status
+### 6) verification_results
+Stores the results of each factor per attempt (3 rows per attempt).
+- id (PK) OR (attempt_id + method as unique)
+- attempt_id (FK → attempts.attempt_id)
+- method (face/voice/ecg)
+- result (pass/fail/na)
+- score (nullable)
+- created_at
+
+### 7) alerts
+Stores alerts generated when verification fails or unauthorized attempt occurs.
+- alert_id (PK)
+- attempt_id (FK → attempts.attempt_id)
+- alert_type (unauthorized_attempt / verification_failed / ...)
+- status (pending/acknowledged)
+- message
+- created_at
+- acknowledged_at
+- acknowledged_by (FK → users.user_id) nullable
+
+### 8) audit_logs
+Tracks administrative actions for accountability.
+- log_id (PK)
+- actor_user_id (FK → users.user_id)
+- action
+- entity
+- entity_id
+- meta
 - created_at
 
 ---
 
 ## Relationships
-- One user can have multiple login attempts
-- Each login attempt can generate an alert
-- Biometric data is linked to a specific user using foreign keys
-
-Foreign keys are enforced to ensure data integrity.
+- One role → many users
+- One user → one biometrics row (1:1)
+- One device → many attempts (1:N)
+- One attempt → many verification_results (1:N)
+- One attempt → zero/one or more alerts (1:N)
+- One admin/security user → many audit logs (1:N)
 
 ---
 
 ## Security Considerations
-- Biometric data is stored as hashes/templates, not raw signals
-- Foreign keys prevent invalid or unauthorized records
-- The database is ready to be integrated with backend authentication logic
+- Passwords stored as hashes (password_hash)
+- Device keys stored as hashes (api_key_hash)
+- Biometric data stored as templates/hashes (not raw signals)
+- Results normalized: verification results stored in verification_results (avoids duplication and supports future expansion)
+- Soft-disable supported via is_active for users/devices
 
 ---
 
 ## Status
-- Database schema implemented
-- Relationships tested and verified
-- Dummy data added for testing
-- Queries tested successfully
-
-The database is ready to be connected with the backend APIs.
+- Schema implemented and tested
+- Relationships verified (foreign keys)
+- Backend API connected and inserting attempts + verification_results successfully
