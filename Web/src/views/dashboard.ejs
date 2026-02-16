@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <title>Dashboard</title>
+</head>
+
+<body>
+
+  <!-- Navbar موحّد -->
+  <header class="topbar">
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span class="badge">Smart Security</span>
+      <span style="font-weight:700;">لوحة الإدارة</span>
+    </div>
+
+    <nav class="nav">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/users">Users</a>
+      <a href="/logs">Logs</a>
+      <a href="/alerts">Alerts</a>
+    </nav>
+
+    <form method="POST" action="/logout" style="margin:0;">
+      <button class="btn-outline" type="submit">تسجيل خروج</button>
+    </form>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <h1>Dashboard</h1>
+      <p class="sub">
+        مرحبًا <b><%= user.full_name %></b> — (<%= user.role %>)
+      </p>
+
+      <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <a class="btn" href="/users" style="width:auto;">Users</a>
+        <a class="btn" href="/logs" style="width:auto;">Logs</a>
+        <a class="btn" href="/alerts" style="width:auto;">Alerts</a>
+
+        <!-- زر أخضر فاتح -->
+        <a class="btn-outline" href="/dashboard"
+           style="width:auto; border-color: rgba(6,95,70,.15); background: var(--green); color: var(--greenText);">
+          تحديث
+        </a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h2 style="margin:0 0 6px 0;">معلومات سريعة</h2>
+      <p class="sub" style="margin:0;">
+        هنا لاحقًا نضيف إحصائيات مثل: عدد محاولات الدخول اليوم، آخر تنبيه، وآخر دخول ناجح/فاشل.
+      </p>
+    </div>
+  </main>
+
+</body>
+</html>
