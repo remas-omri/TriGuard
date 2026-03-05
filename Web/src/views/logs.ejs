@@ -6,24 +6,18 @@
   <link rel="stylesheet" href="/css/style.css" />
   <title>Logs</title>
 </head>
-
 <body>
-
-  <!-- Navbar موحّد -->
   <header class="topbar">
-    <div style="display:flex; gap:10px; align-items:center;">
-      <span class="badge">Smart Security</span>
-      <span style="font-weight:700;">لوحة الإدارة</span>
-    </div>
+    <div>مرحبًا <b><%= user.full_name %></b> — (<%= user.role %>)</div>
 
     <nav class="nav">
       <a href="/dashboard">Dashboard</a>
       <a href="/users">Users</a>
-      <a href="/logs">Logs</a>
+      <a class="active" href="/logs">Logs</a>
       <a href="/alerts">Alerts</a>
     </nav>
 
-    <form method="POST" action="/logout" style="margin:0;">
+    <form method="POST" action="/logout">
       <button class="btn-outline" type="submit">تسجيل خروج</button>
     </form>
   </header>
@@ -31,53 +25,54 @@
   <main class="container">
     <div class="card">
       <h1>سجلات الدخول</h1>
-      <p class="sub">هذه بيانات تجريبية (Mock) — لاحقًا تصير من قاعدة البيانات مباشرة.</p>
-    </div>
+      <p class="sub">هذه السجلات من قاعدة البيانات (PostgreSQL)</p>
 
-    <div class="card" style="margin-top:14px;">
-      <table>
-        <tr>
-          <th>ID</th>
-          <th>User</th>
-          <th>Face</th>
-          <th>Voice</th>
-          <th>ECG</th>
-          <th>Final</th>
-          <th>Time</th>
-        </tr>
+      <% if (error) { %>
+        <div class="alert"><%= error %></div>
+      <% } %>
 
-        <tr>
-          <td>101</td>
-          <td>Admin</td>
-          <td><span class="pill pill-ok">pass</span></td>
-          <td><span class="pill pill-warn">pass</span></td>
-          <td><span class="pill pill-ok">pass</span></td>
-          <td><span class="pill pill-ok">passed</span></td>
-          <td>2026-02-11 23:00</td>
-        </tr>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>المستخدم</th>
+              <th>الدور</th>
+              <th>Face</th>
+              <th>Voice</th>
+              <th>ECG</th>
+              <th>Final</th>
+              <th>الوقت</th>
+            </tr>
+          </thead>
 
-        <tr>
-          <td>102</td>
-          <td>Unknown</td>
-          <td><span class="pill pill-ok">pass</span></td>
-          <td><span class="pill pill-bad">fail</span></td>
-          <td><span class="pill pill-ok">pass</span></td>
-          <td><span class="pill pill-bad">failed</span></td>
-          <td>2026-02-11 23:05</td>
-        </tr>
+          <tbody>
+            <% (logs || []).forEach(l => { %>
+              <tr>
+                <td><%= l.log_id %></td>
+                <td><%= l.full_name %></td>
+                <td><%= l.role %></td>
+                <td><%= l.face_result %></td>
+                <td><%= l.voice_result %></td>
+                <td><%= l.ecg_result %></td>
+                <td><%= l.final_result %></td>
+                <td><%= l.attempt_time ? new Date(l.attempt_time).toLocaleString() : '-' %></td>
+              </tr>
+            <% }) %>
 
-        <tr>
-          <td>103</td>
-          <td>Security Officer</td>
-          <td><span class="pill pill-bad">fail</span></td>
-          <td><span class="pill pill-warn">pass</span></td>
-          <td><span class="pill pill-ok">pass</span></td>
-          <td><span class="pill pill-bad">failed</span></td>
-          <td>2026-02-11 23:12</td>
-        </tr>
-      </table>
+            <% if (!logs || logs.length === 0) { %>
+              <tr>
+                <td colspan="8" style="text-align:center; padding:16px;">
+                  لا يوجد سجلات حالياً
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
 
+  <script src="/js/script.js"></script>
 </body>
 </html>

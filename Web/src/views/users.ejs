@@ -6,91 +6,77 @@
   <link rel="stylesheet" href="/css/style.css" />
   <title>Users</title>
 </head>
-
 <body>
-
-  <!-- Navbar موحّد -->
   <header class="topbar">
-    <div style="display:flex; gap:10px; align-items:center;">
-      <span class="badge">Smart Security</span>
-      <span style="font-weight:700;">لوحة الإدارة</span>
-    </div>
+    <div>مرحبًا <b><%= user.full_name %></b> — (<%= user.role %>)</div>
 
     <nav class="nav">
       <a href="/dashboard">Dashboard</a>
-      <a href="/users">Users</a>
+      <a class="active" href="/users">Users</a>
       <a href="/logs">Logs</a>
       <a href="/alerts">Alerts</a>
     </nav>
 
-    <form method="POST" action="/logout" style="margin:0;">
+    <form method="POST" action="/logout">
       <button class="btn-outline" type="submit">تسجيل خروج</button>
     </form>
   </header>
 
   <main class="container">
     <div class="card">
-      <h1>إدارة المستخدمين</h1>
-      <p class="sub">حالياً هذه واجهة جاهزة — وربط قاعدة البيانات بيكون في خطوة لاحقة.</p>
+      <h1>Users</h1>
+      <p class="sub">قائمة المستخدمين من قاعدة البيانات (PostgreSQL)</p>
 
-      <!-- نموذج إضافة مستخدم (واجهة فقط اليوم) -->
-      <div style="margin-top:14px;">
-        <h2 style="margin:0 0 8px 0;">إضافة مستخدم</h2>
+      <% if (error) { %>
+        <div class="alert"><%= error %></div>
+      <% } %>
 
-        <div style="display:grid; gap:10px; grid-template-columns: repeat(4, 1fr);">
-          <input placeholder="الاسم الكامل" />
-          <input placeholder="Email" />
-          <input placeholder="Password" />
-          <select>
-            <option>user</option>
-            <option>security</option>
-            <option>admin</option>
-          </select>
-        </div>
+      <form class="grid" method="POST" action="/users">
+        <input name="full_name" placeholder="الاسم الكامل" required />
+        <input name="email" type="email" placeholder="البريد الإلكتروني" required />
+        <input name="password" type="password" placeholder="كلمة المرور" required />
+        <select name="role">
+          <option value="user">user</option>
+          <option value="security">security</option>
+          <option value="admin">admin</option>
+        </select>
+        <button class="btn" type="submit">إضافة</button>
+      </form>
 
-        <button class="btn" style="width:auto; margin-top:10px;">إضافة (واجهة فقط)</button>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>الاسم</th>
+              <th>الإيميل</th>
+              <th>الدور</th>
+              <th>تاريخ الإنشاء</th>
+              <th>حذف</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% (users || []).forEach(u => { %>
+              <tr>
+                <td><%= u.user_id %></td>
+                <td><%= u.full_name %></td>
+                <td><%= u.email %></td>
+                <td><%= u.role %></td>
+                <td><%= new Date(u.created_at).toLocaleString() %></td>
+                <td>
+                  <form method="POST" action="/users/<%= u.user_id %>/delete"
+                        onsubmit="return confirm('متأكدة من الحذف؟')">
+                    <button class="btn-outline" type="submit">حذف</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
       </div>
     </div>
-
-    <div class="card" style="margin-top:14px;">
-      <h2 style="margin:0 0 10px 0;">قائمة المستخدمين (Mock)</h2>
-
-      <table>
-        <tr>
-          <th>ID</th>
-          <th>الاسم</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Action</th>
-        </tr>
-
-        <tr>
-          <td>1</td>
-          <td>Admin</td>
-          <td>admin@demo.com</td>
-          <td><span class="pill">admin</span></td>
-          <td><button class="btn-outline" style="width:auto;">حذف</button></td>
-        </tr>
-
-        <tr>
-          <td>2</td>
-          <td>Security Officer</td>
-          <td>security@demo.com</td>
-          <td><span class="pill">security</span></td>
-          <td><button class="btn-outline" style="width:auto;">حذف</button></td>
-        </tr>
-
-        <tr>
-          <td>3</td>
-          <td>User Test</td>
-          <td>user@demo.com</td>
-          <td><span class="pill">user</span></td>
-          <td><button class="btn-outline" style="width:auto;">حذف</button></td>
-        </tr>
-      </table>
-    </div>
-
   </main>
 
+  <script src="/js/script.js"></script>
 </body>
 </html>
